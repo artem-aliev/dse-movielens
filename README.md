@@ -5,8 +5,8 @@ Movie Lens with Gremlin
 
 # Prerequisites
 
-* TinkerPop 3.0 http://tinkerpop.incubator.apache.org/
-* Titan 1.0 http://thinkaurelius.github.io/titan/
+* Datastax DSE 5.0  or later https://docs.datastax.com/en/dse/5.1/dse-admin/datastax_enterprise/install/installTOC.html
+* DSE graph loader https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/graph/dgl/dglInstall.html 
 
 # Download MovieLens Data Set
 
@@ -17,25 +17,13 @@ curl -O http://files.grouplens.org/datasets/movielens/ml-1m.zip
 unzip ml-1m.zip
 ```
 
-# Generate Gryo file
-
+# Start DSE
 ```
-$TITAN_HOME/bin/gremlin.sh
-
-:load movielens.groovy
-:q
+dse cassandra -k -g
 ```
 
-# Load Gryo file into Titan
+# Load Data
 
 ```
-$TITAN_HOME/bin/gremlin.sh
-
-graph = TitanFactory.open('titan.properties')
-graph.io(gryo()).readGraph('./graphdata/movielens.gryo')
-g = graph.traversal()
-g.V().count()
-g.E().count()
-g.V().label().groupCount()
-g.E().label().groupCount()
+graphloader -graph movielens -address  127.0.0.1 movielens_loader.groovy
 ```
