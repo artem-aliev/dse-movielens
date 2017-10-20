@@ -93,10 +93,10 @@ s.V().has('occupation', 'name', 'programmer').
 
 // What is average “Star Trek” rating?
 
-// project step  with 'by' modifiers allows to get results from different  subqueries
+// Project step  with 'by' modifiers allows us to get results from different subqueries
 s.V().has('movie', 'name', regex('Star Trek.*')).project("name", "rating").
-// get name from the current movie vertex
+// Get the name from the current movie vertex
         by(values('name')).
-// rating from 'in' edges. Everege of all of them
+// Rating from 'in' edges. Average of all of them
         by(__.inE().values('stars').mean())
 
