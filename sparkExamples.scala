@@ -105,7 +105,7 @@ group by genre.name
   val g2 = Graphframe(spark.sql("select id from v"), (spark.sql("select src, dst from e"))
 
 
-  // Example of triangle algorithm
+  // Example of Label Propagation algorithm
   val lp = g.labelPropagation.maxIter(5).run()
 
 }
