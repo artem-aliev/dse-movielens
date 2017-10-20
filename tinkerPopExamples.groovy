@@ -10,88 +10,88 @@ g.V().has('genre', 'name', 'Sci-Fi').
  * OLTP Vertex Centric Queries
 */
 
-// What “Star Trek” movies did user rate?
+// What “Star Trek” movies did a user rate?
 
-//Start with one user vertex with id 710. We have no names in the dataset
+//Start at the vertex for user id 710. We have no names in the dataset
 g.V().has('user', 'id', 710).
-// traverse to all vertices by 'rated' edge.
+// Traverse to all connected vertices by 'rated' edge.
         out('rated').
-// Filter only "Star Trek" movies
+// Filter out everything but "Star Trek" movies
         has('name', regex('Star Trek.*'))
 
-// let's what was visited byt reaversal
+// Let's display what was visited by the traversal
 g.V().has('user', 'id', 710).
         out('rated').
         has('name', regex('Star Trek.*')).
-// path() step give us all vistited pathes,
-//unfold() "flatMap" them into set of verticies
+// path() step gives us all visited paths,
+// unfold() "flatMap" them into set of verticies
         path().unfold()
 
-// add gendre and see as one more set of hops were added
+// Add genre and see as one more set of hops
 g.V().has('user', 'id', 710).
         out('rated').
         has('name', regex('Star Trek.*')).
         out("genre").
         path().unfold()
 
-// What were his ratings?
+// What were 710's ratings of Star Trek movies??
 
-// This query store parts of the path and then show them with select step
+// This query store parts of the path and then shows them with select step
 // Start with user 710 again
 g.V().has('user', 'id', 710).
-//rating are stored in 'rated' edge property 'stars'
-// find rating edges and remember them with 'as' modifier
+// Ratings are stored in 'rated' edge property 'stars'
+// Find rating edges and remember them with 'as' modifier
         outE('rated').as('r').
-// traverse to the movie
+// Traverse to the movie
         inV().
-// select Star Trek only and store them
+// Select Star Trek only and store them
         has('name', regex('Star Trek.*')).as('m').
-// select 'name' from stored 'm' and 'stars' from 'r'
+// Select 'name' from stored 'm' and 'stars' from 'r'
         select ('m', 'r').by('name').by('stars')
 
 /**
  * OLAP Queries
 */
 
-//Make an in memory snapshot, for faster spark operations. Use Spark cache
+//Make an in memory snapshot, for faster Spark operations. Use Spark cache
 s = graph.snapshot().conf("gremlin.spark.persistStorageLevel", "MEMORY_ONLY").
         conf("gremlin.spark.graphStorageLevel", "MEMORY_ONLY").
         create()
 
-// How many movies the dataset have for each genre?
+// How many movies are in the dataset for each genre?
 
-// get all 'movie' vertices
+// Get all 'movie' vertices
 s.V().hasLabel("movie").
-// find genre
+// Find genre
         out("genre").
-// count by genre name
+// Count by genre name
         groupCount().by("name")
 
 
-// Who are watching Sci-Fi?
+// Who is watching Sci-Fi?
 
-// that is a long run genre->movie->user->occupation
-// start with Ski-Fi genre
+// This is a long traversal: genre->movie->user->occupation
+// Start with Sci-Fi genre
 s.V().has('genre', 'name', 'Sci-Fi').
-// follow 'genre' edge to 'movies'
+// Follow 'genre' edge to 'movies'
         in('genre').
-// by 'rated' edge to users
+// By 'rated' edge to users
         in('rated').
-// by 'occupation' edge to 'occupation' vertex
+// By 'occupation' edge to 'occupation' vertex
         out('occupation').
-// group the vertices by name and count each group
+// Group the vertices by name and count each group
         groupCount().by('name')
 
-// What are programmers watching
+// What genres are programmers watching?
 
-// let's go in the opposite direction from occupation to genre
+// Let's go in the opposite direction from occupation to genre
 s.V().has('occupation', 'name', 'programmer').
         in('occupation').
         out('rated').
         out('genre').
         groupCount().by('name')
 
-// What is “Star Trek” raiting
+// What is average “Star Trek” rating?
 
 // project step  with 'by' modifiers allows to get results from different  subqueries
 s.V().has('movie', 'name', regex('Star Trek.*')).project("name", "rating").
