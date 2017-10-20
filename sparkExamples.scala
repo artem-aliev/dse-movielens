@@ -2,28 +2,28 @@
 
 class SparkExamples extends App {
 
-  // get the same data we have before into spark.
-  // This is Datastax spark/graph integration. It support both tinkerPop and
-  // GraphFrmames for the same source
+  // Get the same data we had before into Spark.
+  // This is Datastax Spark/Graph integration. It support both TinkerPop and
+  // GraphFrames for the same source
   val g: GraphFrame = spark.dseGraph("movielens").cache
 
-  // simple count are fast and easy
-  // GraphFrame are just pair of vertices and edges dataframes.
+  // Simple counts are fast and easy
+  // GraphFrames are just pair of vertices and edges dataframes.
   // Thus all dataframe methods could be applied to them
   g.vertices.count
   g.edges.count
 
-  //veritces dataframe should have 'id' columns.
+  // Vertices dataframe should have 'id' columns.
   g.vertices.show(3)
-  // edges one should have 'src' and 'dst' columns. All three names are hardcoded
+  // Edges one should have 'src' and 'dst' columns. All three names are hardcoded
   g.edges.show(3)
-  // no support for vertex types, thus I added '~label' column to support them.
+  // No support for vertex types, thus I added '~label' column to support them.
 
-  // traversal with GraphFrames are done with "motif finding language"
-  // it is a sequence of paterns in form vertex to edge to vertex triplets
-  // all paterns has named variables that are mapped in a result dataframe struct column
+  // Traversals with GraphFrames are done with "motif finding language"
+  // A sequence of patterns in the form of vertex to edge to vertex triplets
+  // All patterns can have named variables that are mapped in a result dataframe struct column
 
-  // this is the same request I use before:
+  // This is the same request I used before:
   // What are programmers watching
   // But it's longer. 325 vs 136 symbols
   g.find(
@@ -39,7 +39,7 @@ class SparkExamples extends App {
     and genre_e.`~label` = "genre"
     """).groupBy("genre.name").count().show
 
-  // The sql request to properly normolized database will looks like this
+  // The sql request to properly normalized database will looks like this
   // 6 joins
   spark.sql(
     """
@@ -54,7 +54,7 @@ where occupation.name = "programmer"
 group by genre.name
 |""").show
 
-  // GraphFrame dataframes are not normolized, it has only two tables,
+  // GraphFrame dataframes are not normalized, it has only two tables,
   // so the SQL will look more complicated
   // let register vertices and edges as temporary tables
   g.vertices.createOrReplaceTempView("v")
@@ -62,10 +62,10 @@ group by genre.name
 
 
   // Now our join will looks a little bit more wordy
-  // the logic is still the same: traversing from 'ocupation'  to 'genre'
-  // 'where' statement is the the same as graph frame filter.
-  // 'joins' repeat motif finding part.
-  // Actually, 'motif finding' is a syntactic sugar for that joins
+  // The logic is still the same: traversing from 'occupation'  to 'genre'
+  // The 'where' statement is the the same as graph frame filter.
+  // The 'joins' repeat motif finding part.
+  // Actually, 'motif finding' is a syntactic sugar for doing these joins
   spark.sql(
     """
 select genre.name, count(1) from v occupation
@@ -83,14 +83,14 @@ group by genre.name
 |""").show
 
 
-  // join with other source
-  // let's imagine we have data source with user data
+  // Join with other non-Graph sources
+  // Let's imagine we have data source with user data, this could be MySQL, Cassandra, CSV ...
   val names = List((710, "Russ")).toDF("uid", "user_name")
-  //we can enreach our graph with our data
+  // We can enrich our graph with the external data
   val v = g.vertices
   val nv = v.join(names, v("_id") === names("uid") and v("~label") === "user", "left")
   val ng = GraphFrame(nv, g.edges)
-  // and find that Russ was watching 885 movies!
+  // and find that Russ has watched 885 movies!
   ng.find("(user)-[rated_e]->(movie)").filter(
     """
     user.user_name = "Russ"
@@ -98,14 +98,14 @@ group by genre.name
     """).count()
 
 
-  // export is simple
+  // Export is simple
   g.vertices.write.save("ml_v")
   g.edges.write.save("ml_e")
-  // import is as simple as loading two df:
+  // Import is as simple as loading two df:
   val g2 = Graphframe(spark.sql("select id from v"), (spark.sql("select src, dst from e"))
 
 
-  // exemple of triange algorithm
+  // Example of triangle algorithm
   val lp = g.labelPropagation.maxIter(5).run()
 
 }
