@@ -3,7 +3,7 @@ graph = TinkerGraph.open()
 g = graph.traversal()
 
 //dir = '/tmp/movielen/'
-dir = './'
+dir = '/Users/artemaliev/git/dse-movielens/'
 inputDir = dir + 'ml-1m/'
 outputDir = dir + 'graphdata/'
 
@@ -17,6 +17,9 @@ occupations = [0:'other', 1:'academic/educator', 2:'artist', \
 // local caches to speed up edge creation
 movieCache = [:]
 userCache = [:]
+
+
+for (i = 0; i <10; i++) {
 
 new File(inputDir + 'movies.dat').eachLine { line ->
   components = line.split('::')
@@ -43,7 +46,7 @@ new File(inputDir + 'users.dat').eachLine { line ->
   occupationVertex = hits.hasNext() ? hits.next() : graph.addVertex(T.label, 'occupation', 'name', occupation)
   userVertex.addEdge('occupation', occupationVertex)
 }
-
+}
 count = 0;
 start = System.currentTimeMillis()
 new File(inputDir + 'ratings.dat').eachLine { line ->
